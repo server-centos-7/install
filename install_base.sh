@@ -134,7 +134,7 @@ systemctl enable postgresql-9.4.service
 systemctl start postgresql-9.4.service
 
 ##### Install Java 1.8
-yum install java-1.8.0-openjdk
+yum -y install java-1.8.0-openjdk
 
 ##### Install Solr 1.5
 adduser solr
