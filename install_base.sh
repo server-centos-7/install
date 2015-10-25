@@ -40,22 +40,19 @@ yum erase ftp -y
 ###### Установка обновлений и репозитариев
 yum -y update
 yum -y upgrade
-yum install epel-release ius-release yum-priorities
+yum install epel-release ius-release yum-priorities wget sed
 yum -y update
 
-##### админ проги
-yum -y install htop atop pg_top mytop iftop iotop wget sed
 
 ##### Автоматические обновления
 yum -y install yum-cron
-echo "exclude=kernel* mysql* postgresql* nginx*" >> /etc/yum.conf
-sed -i 's/apply_updates = no/apply_updates = yes/' /etc/yum/yum-cron.conf
+sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/yum/yum-cron.conf
 echo "YUM_PARAMETER=\"--exclude='kernel*' --exclude='grub*' --exclude='mysql' --exclude='postgresql*' --exclude='nginx*' --exclude='redis*'\"" >> /etc/sysconfig/yum-cron
 echo "MAILTO=\"$MAIL\"" >> /etc/sysconfig/yum-cron
 systemctl restart yum-cron
 
 ##### Install and set-up NTP daemon:
-yum install -y ntp
+yum -y install ntp
 firewall-cmd --add-service=ntp --permanent
 firewall-cmd --reload
 systemctl start ntpd
@@ -64,7 +61,7 @@ systemctl enable ntp
 ##### Install MySQL:
 yum -y install http://www.percona.com/downloads/percona-release/redhat/0.1-3/percona-release-0.1-3.noarch.rpm \
 Percona-Server-server-56 \
-xtrabackup
+percona-xtrabackup-22
 
 mkdir -p /data/mysql
 touch /data/mysql/mysql.sock
@@ -119,19 +116,30 @@ systemctl enable redis
 
 
 ##### Install Postgress
-yum localinstall http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm
-yum install postgresql94-server
+yum -y install http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-2.noarch.rpm
+yum -y install postgresql94-server
+## меняем дирректорию
+mkdir -p /data/pgsql
+chown -R postgres:postgres /data/pgsql/
+chcon -t postgresql_db_t /data/pgsql/
+semanage fcontext -a -t postgresql_db_t "/data/pgsql(/.*)?"
+restorecon -Rv /data/pgsql
+su postgres	
+/usr/pgsql-9.4/bin/initdb -D /data/pgsql/
+exit
+su root
+cp /usr/lib/systemd/system/postgresql-9.4.service /etc/systemd/system/postgresql-9.4.service
+sed -i 's#Environment=PGDATA=/var/lib/pgsql/9.4/data/#Environment=PGDATA=/data/pgsql/#g' /etc/systemd/system/postgresql-9.4.service
+systemctl enable postgresql-9.4.service
+systemctl start postgresql-9.4.service
 
-# разобраться с натройкой в нестандартную дирректорию по умолчанию /var/lib/pgsql/data/
-
-postgresql-setup initdb
-systemctl start postgresql
-systemctl enable postgresql
+##### админ проги
+yum -y install htop atop pg_top mytop iftop iotop 
 
 ##### Install 'composer':
 cd ~
 curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 composer global require drush/drush:7.*
 
-echo "Все готово шеф, как вы просили" | mail -s "Установка сервера завершена" root
+echo "Все готово шеф, как вы просили"
 
