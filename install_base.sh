@@ -133,6 +133,23 @@ sed -i 's#Environment=PGDATA=/var/lib/pgsql/9.4/data/#Environment=PGDATA=/data/p
 systemctl enable postgresql-9.4.service
 systemctl start postgresql-9.4.service
 
+##### Install Java 1.8
+yum install java-1.8.0-openjdk
+
+##### Install Solr 1.5
+adduser solr
+cd /opt
+wget http://apache-mirror.rbc.ru/pub/apache/lucene/solr/5.3.1/solr-5.3.1.tgz
+tar -zxvf solr-5.3.1.tgz
+cp /opt/solr-5.3.1/bin/install_solr_service.sh .
+rm -rf solr-5.3.1
+./install_solr_service.sh solr-5.3.1.tgz
+chkconfig --add solr
+chkconfig | grep solr
+cd /opt/solr/bin
+sudo ./solr create -c axept
+sudo chown -R solr:solr /var/solr/
+
 ##### админ проги
 yum -y install htop atop pg_top mytop iftop iotop 
 
