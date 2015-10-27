@@ -137,21 +137,32 @@ systemctl start postgresql-9.4.service
 yum -y install java-1.8.0-openjdk
 
 ##### Install Solr 1.5
+yum -y yinstall unzip zip lsof 
 adduser solr
 cd /opt
 wget http://apache-mirror.rbc.ru/pub/apache/lucene/solr/5.3.1/solr-5.3.1.tgz
 tar -zxvf solr-5.3.1.tgz
+firewall-cmd --add-port=8983/tcp --permanent
 cp /opt/solr-5.3.1/bin/install_solr_service.sh .
 rm -rf solr-5.3.1
 ./install_solr_service.sh solr-5.3.1.tgz
 chkconfig --add solr
 chkconfig | grep solr
-cd /opt/solr/bin
-sudo ./solr create -c axept
-sudo chown -R solr:solr /var/solr/
+cd /tmp
+wget http://ftp.drupal.org/files/projects/search_api_solr-7.x-1.x-dev.tar.gz
+tar -zxvf search_api_solr-7.x-1.x-dev.tar.gz
+mkdir -p /var/solr/data/axept/conf
+cp -a search_api_solr/solr-conf/5.x/* /var/solr/data/axept/conf
+cd /var/solr/data/axept/conf
+sed -i 's#<dataDir>${solr.data.dir:}</dataDir>#<dataDir>/data/solr/axept/</dataDir>#g' /var/solr/data/axept/conf/solrconfig.xml
+chown -R solr:solr /var/solr/
+mkdir -p /data/solr/axept
+chown -R solr:solr /data/solr
+/opt/solr/bin/solr create -c axept
+systemctl start solr.service
 
 ##### админ проги
-yum -y install htop atop pg_top mytop iftop iotop 
+yum -y install htop atop pg_top mytop iftop iotop patch
 
 ##### Install 'composer':
 cd ~
