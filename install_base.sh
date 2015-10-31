@@ -133,6 +133,9 @@ sed -i 's#Environment=PGDATA=/var/lib/pgsql/9.4/data/#Environment=PGDATA=/data/p
 systemctl enable postgresql-9.4.service
 systemctl start postgresql-9.4.service
 
+##### админ проги
+yum -y install htop atop pg_top mytop iftop iotop patch
+
 ##### Install Java 1.8
 yum -y install java-1.8.0-openjdk
 
@@ -151,9 +154,19 @@ chkconfig | grep solr
 cd /tmp
 wget http://ftp.drupal.org/files/projects/search_api_solr-7.x-1.x-dev.tar.gz
 tar -zxvf search_api_solr-7.x-1.x-dev.tar.gz
+cd search_api_solr
+wget https://www.drupal.org/files/issues/solr5_conf.patch
+patch -p0 < solr5_conf.patch
+# русская морфология
+wget http://download.services.openoffice.org/files/contrib/dictionaries/ru_RU.zip
+unzip ru_RU.zip -d ru_RU
+sed -i 's#SET KOI8-R#SET UTF-8#g' ru_RU/ru_RU.aff
+iconv -f KOI8-R -t UTF-8 ru_RU/ru_RU.aff > solr-conf/5.x/ru_RU.aff
+iconv -f KOI8-R -t UTF-8 ru_RU/ru_RU.dic > solr-conf/5.x/ru_RU.dic
+rm -rf ru_RU ru_RU.zip
+
 mkdir -p /var/solr/data/axept/conf
 cp -a search_api_solr/solr-conf/5.x/* /var/solr/data/axept/conf
-cd /var/solr/data/axept/conf
 sed -i 's#<dataDir>${solr.data.dir:}</dataDir>#<dataDir>/data/solr/axept/</dataDir>#g' /var/solr/data/axept/conf/solrconfig.xml
 chown -R solr:solr /var/solr/
 mkdir -p /data/solr/axept
@@ -161,8 +174,7 @@ chown -R solr:solr /data/solr
 /opt/solr/bin/solr create -c axept
 systemctl start solr.service
 
-##### админ проги
-yum -y install htop atop pg_top mytop iftop iotop patch
+
 
 ##### Install 'composer':
 cd ~
@@ -170,4 +182,5 @@ curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin
 composer global require drush/drush:7.*
 
 echo "Все готово шеф, как вы просили"
-
+echo "поменяй пароль для постгресса"
+echo "solr по адресу http://IP:8983 закрыть доступ"
