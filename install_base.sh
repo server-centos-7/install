@@ -12,6 +12,7 @@ cd /tmp
 ##### меняем локаль
 LANG=en_US.utf8
 export LANG=en_US.utf8
+timedatectl set-timezone Europe/Moscow
 
 ##### устанавливаем хост
 hostnamectl set-hostname $HOST
@@ -57,17 +58,20 @@ firewall-cmd --add-service=ntp --permanent
 firewall-cmd --reload
 systemctl start ntpd
 systemctl enable ntp
+ntpdate time.apple.com
+
+mkdir -p /data/log
 
 ##### Install MySQL:
 yum -y install http://www.percona.com/downloads/percona-release/redhat/0.1-3/percona-release-0.1-3.noarch.rpm \
 Percona-Server-server-56 \
 percona-xtrabackup-22
 
-mkdir -p /data/mysql
-touch /data/mysql/mysql.sock
-chown -R mysql:mysql /data/mysql
-chcon -R -t mysqld_db_t /data/mysql
-ln -s /data/mysql/mysql.sock /var/lib/mysql/mysql.sock
+mkdir -p /db/mysql
+touch /db/mysql/mysql.sock
+chown -R mysql:mysql /db/mysql
+chcon -R -t mysqld_db_t /db/mysql
+ln -s /db/mysql/mysql.sock /var/lib/mysql/mysql.sock
 mv /etc/my.cnf /etc/my.cnf.default
 
 systemctl start mysqld
@@ -99,6 +103,7 @@ systemctl enable nginx
 yum -y install \
 php56u-fpm \
 php56u-mysqlnd \
+php56u-pgsql \
 php56u-gd  \
 php56u-xml \
 php56u-xmlrpc \
@@ -117,19 +122,35 @@ systemctl enable redis
 
 ##### Install Postgress
 yum -y install http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-2.noarch.rpm
-yum -y install postgresql94-server
+yum -y install postgresql94-server pgtune
 ## меняем дирректорию
-mkdir -p /data/pgsql
-chown -R postgres:postgres /data/pgsql/
-chcon -t postgresql_db_t /data/pgsql/
-semanage fcontext -a -t postgresql_db_t "/data/pgsql(/.*)?"
-restorecon -Rv /data/pgsql
+mkdir -p /db/pgsql
+chown -R postgres:postgres /db/pgsql/
+chcon -t postgresql_db_t /db/pgsql/
+semanage fcontext -a -t postgresql_db_t "/db/pgsql(/.*)?"
+restorecon -Rv /db/pgsql
 su postgres	
-/usr/pgsql-9.4/bin/initdb -D /data/pgsql/
+/usr/pgsql-9.4/bin/initdb -D /db/pgsql/
 exit
 su root
 cp /usr/lib/systemd/system/postgresql-9.4.service /etc/systemd/system/postgresql-9.4.service
-sed -i 's#Environment=PGDATA=/var/lib/pgsql/9.4/data/#Environment=PGDATA=/data/pgsql/#g' /etc/systemd/system/postgresql-9.4.service
+sed -i 's#Environment=PGDATA=/var/lib/pgsql/9.4/data/#Environment=PGDATA=/db/pgsql/#g' /etc/systemd/system/postgresql-9.4.service
+pgtune \
+    -i /db/pgsql/postgresql.conf \
+    -o /db/pgsql/postgresql.conf.pgtune \
+    --memory=4294967296 \
+    --type=Web \
+    --connections=500
+sed -i 's#US/Eastern#Europe/Moscow#g' /db/pgsql/postgresql.conf.pgtune
+echo "port = 5432" >> /db/pgsql/postgresql.conf.pgtune
+echo "ssl = false" >> /db/pgsql/postgresql.conf.pgtune
+echo "unix_socket_directory = '/var/run/postgresql'" >> /db/pgsql/postgresql.conf.pgtune
+sed -i 's#pg_log#/data/log/postgres/pg_log#g' /db/pgsql/postgresql.conf.pgtune
+mv /db/pgsql/postgresql.conf /db/pgsql/postgresql-factory-default.conf
+mv /db/pgsql/postgresql.conf.pgtune /db/pgsql/postgresql.conf
+chown postgres:postgres /db/pgsql/postgresql.conf
+mkdir -p /data/log/postgres
+chown postgres:postgres /data/log/postgres
 systemctl enable postgresql-9.4.service
 systemctl start postgresql-9.4.service
 
@@ -147,10 +168,8 @@ wget http://apache-mirror.rbc.ru/pub/apache/lucene/solr/5.3.1/solr-5.3.1.tgz
 tar -zxvf solr-5.3.1.tgz
 firewall-cmd --add-port=8983/tcp --permanent
 cp /opt/solr-5.3.1/bin/install_solr_service.sh .
-rm -rf solr-5.3.1
 ./install_solr_service.sh solr-5.3.1.tgz
-chkconfig --add solr
-chkconfig | grep solr
+rm -rf solr-5.3.1 solr-5.3.1.tgz
 cd /tmp
 wget http://ftp.drupal.org/files/projects/search_api_solr-7.x-1.x-dev.tar.gz
 tar -zxvf search_api_solr-7.x-1.x-dev.tar.gz
@@ -165,14 +184,19 @@ iconv -f KOI8-R -t UTF-8 ru_RU/ru_RU.aff > solr-conf/5.x/ru_RU.aff
 iconv -f KOI8-R -t UTF-8 ru_RU/ru_RU.dic > solr-conf/5.x/ru_RU.dic
 rm -rf ru_RU ru_RU.zip
 
+
+
+
 mkdir -p /var/solr/data/axept/conf
 cp -a search_api_solr/solr-conf/5.x/* /var/solr/data/axept/conf
-sed -i 's#<dataDir>${solr.data.dir:}</dataDir>#<dataDir>/data/solr/axept/</dataDir>#g' /var/solr/data/axept/conf/solrconfig.xml
 chown -R solr:solr /var/solr/
+# меняем дирректорию для индекса
+sed -i 's#<dataDir>${solr.data.dir:}</dataDir>#<dataDir>/data/solr/axept/</dataDir>#g' /var/solr/data/axept/conf/solrconfig.xml
 mkdir -p /data/solr/axept
 chown -R solr:solr /data/solr
 /opt/solr/bin/solr create -c axept
 systemctl start solr.service
+chkconfig --add solr
 
 
 
