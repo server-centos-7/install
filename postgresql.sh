@@ -1,7 +1,7 @@
 #! /bin/bash
 # -*- coding: utf-8 -*-
 # PostgreSQL
-POSTGRES_PS=$(whiptail --title "Пароль для базы данных" --inputbox "Введите пароль для базы данных и нажмите Ok для продолжения." 10 60 3>&1 1>&2 2>&3)
+POSTGRES_PS=$(whiptail --title "Пароль для базы данных" --inputbox "Введите пароль для базы данных PostgreSQL и нажмите Ok для продолжения." 10 60 3>&1 1>&2 2>&3)
 exitstatus=$?
 if [ $exitstatus = 0 ]; then
 #POSTGRES_PS=""

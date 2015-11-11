@@ -75,6 +75,8 @@ systemctl start systemd-timedated
 ################################################################
 # Install ImageMagick
 yum -y install ImageMagick
+# для управления SELinux
+yum -y install policycoreutils-python
 
 ################################################################
 # WEB Stack

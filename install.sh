@@ -13,12 +13,12 @@ if (whiptail --title "Скрипт установки сервера" --yesno "�
 	
 	whiptail --title "Софт для установки" --checklist --separate-output \
 	"Выберите необходимый софт:" 20 78 15 \
-	"nginx" "Будет установлен Nginx 1.9" off \
-	"php" "Будет установлен PHP 5.6 FPM Drush Composer" off \
-	"MySQL" "Будет установлен MySQL 5.6" off \
-	"PostgreSQL" "Будет установлен PostgreSQL 9.4" off \
-	"redis" "Будет установлен Redis v 3" off \
-	"Solr" "Будет установлен Apach Solr" off 2>results
+	"nginx" "Будет установлен Nginx 1.9  " on \
+	"php" "Будет установлен PHP 5.6 FPM Drush Composer  " on \
+	"MySQL" "Будет установлен MySQL 5.6  " on \
+	"PostgreSQL" "Будет установлен PostgreSQL 9.4  " on \
+	"redis" "Будет установлен Redis v 3  " on \
+	"Solr" "Будет установлен Apach Solr  " on 2>results
 	exitstatus=$?
 	if [ $exitstatus = 0 ]; then
 	. main.sh

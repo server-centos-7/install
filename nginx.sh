@@ -25,6 +25,10 @@ firewall-cmd --reload
 systemctl start nginx
 systemctl enable nginx
 
+# SSL
+yum -y install mod_ssl openssl
+mkdir /etc/nginx/ssl
+
 $SETCOLOR_SUCCESS
 echo -n "$(tput hpa $(tput cols))$(tput cub 15)[Nginx OK]"
 $SETCOLOR_NORMAL
