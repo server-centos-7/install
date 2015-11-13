@@ -1,15 +1,13 @@
 #! /bin/bash
 # -*- coding: utf-8 -*-
 # Program: LAMP Stack Installation Script
-SHELL=/bin/bash
-
 #Указать переменные 
-#echo -n "введите email администратора:"
-#read MAIL
 #MAIL=""
 #HOST=""
-cd /tmp
+#echo -n "введите email администратора:"
+#read MAIL
 
+cd /tmp
 ################################################################
 # меняем локаль 
 LANG=ru_RU.UTF-8
@@ -46,7 +44,6 @@ yum install -y epel-release ius-release yum-priorities
 yum -y update
 yum install -y wget sed patch htop atop mytop iftop iotop 
 
-
 ################################################################
 # Автоматические обновления
 yum -y install yum-cron
@@ -75,6 +72,7 @@ systemctl start systemd-timedated
 ################################################################
 # Install ImageMagick
 yum -y install ImageMagick
+
 # для управления SELinux
 yum -y install policycoreutils-python
 
@@ -91,12 +89,6 @@ yum -y install policycoreutils-python
 # создание дирректории логов
 
 mkdir -p /data/log
-
-################################################################
-# создание дирректории для бекапов
-mkdir /backup/pgsql
-chown postgres:postgres /backup/pgsql
-
 
 ################################################################
 # создание дирректории для бекапов

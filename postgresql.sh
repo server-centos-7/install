@@ -11,6 +11,7 @@ if [ $exitstatus = 0 ]; then
 yum -y install http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-2.noarch.rpm
 yum -y install postgresql94-server pgtune pg_top
 echo "export PATH=\$PATH:/usr/pgsql-9.4/bin" >> ~/.bash_profile
+echo "export PATH=\$PATH:/usr/pgsql-9.4/bin" >> ~/.zshrc
 su - postgres -c "echo \"export PATH=\$PATH:/usr/pgsql-9.4/bin\" >> ~/.bash_profile"
 ## меняем дирректорию 
 # https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Managing_Confined_Services/sect-Managing_Confined_Services-PostgreSQL-Configuration_Examples.html
