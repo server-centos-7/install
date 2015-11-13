@@ -1,3 +1,6 @@
+#! /bin/bash
+# -*- coding: utf-8 -*-
+
 systemctl start firewalld
 firewall-cmd --permanent --remove-service=ssh
 # наш порт по ssh
@@ -9,7 +12,7 @@ firewall-cmd --permanent --add-service=smtp
 firewall-cmd --permanent --add-service=ntp
 
 yum -y install ipset
-# создание списка dropips
+# создание списка blacklist
 ipset -N blacklist hash:ip hashsize 4096
 ipset -N web_black_list hash:ip timeout 300
 # добавление ip  
