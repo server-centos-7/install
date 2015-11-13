@@ -58,7 +58,11 @@ git clone https://github.com/CISOfy/Lynis
 # cd /usr/share/Lynis
 # ./lynis audit system -Q
 echo "alias lynis='cd /usr/share/Lynis && ./lynis'" >> ~/.zshrc
-# запускать можно так lynis audit system -Q
+# запускать можно так lynis -c -Q
+# http://linoxide.com/how-tos/lynis-security-tool-audit-hardening-linux/
+# lynis audit system -Q
+# grep Warning /var/log/lynis.log
+# grep Suggestion /var/log/lynis.log
 
 $SETCOLOR_SUCCESS
 echo -n "$(tput hpa $(tput cols))$(tput cub 15)[Security OK]"
