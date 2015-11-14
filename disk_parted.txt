@@ -1,0 +1,160 @@
+
+	ssd	  --  256Gb + 256Gb  --					hdd	  --  2Tb 	+	2Tb  --
+
+|--------sd1--------|--------sd2--------|	|--------hd1--------|--------hd2--------|
+| /boot      Raid1 500Mb  xfs 			|	|					|					|
+| defaults,discard,noatime,nobarrier	|	| /var/log 			| /tmp				|
+|---------------------------------------|	| 16Gb ext2			| 16Gb ext2			|
+| /os 	     Raid1 50Gb  xfs 		 	|	|					|					|	
+|	                    				|	| rw,auto,async,	| rw,auto,async,	|
+| defaults,discard,noatime,nobarrier,	|	| nouser,nosuid,	| nouser,nosuid,	|
+| logbufs=8								|	| noexec,nodev,		| noexec,nodev,		|
+| 										|	| nofail,noatime,	| nofail,noatime,	|
+|										|	| barrier=0,		| barrier=0,		|
+|---------------------------------------|	| data=writeback,	| data=writeback,	|
+| /var/www   Raid1 100Gb Ext4 			|	| commit=60			|					|
+|										|	|					|					|
+| defaults,discard,noatime,barrier=0,	|	|---------------------------------------|
+| data=writeback,						|	|			Swap  16 Gb  Raid_1			|
+|										|	|---------------------------------------|
+|										|	| /public		Raid_1					|
+|-------------------|-------------------|	|				1474 Gb - ext4			|
+| MySQL				| mysql_log 		|	| rw,auto,async,nouser,nosuid,noexec,	|
+| pg_log			| PgSQL				|	| nodev,noatime,commit=60,				|
+| 					|		 			|	| barrier=0,data=writeback,				|	
+| 100 Gb - Ext4		| 100 Gb - Ext4		|	|		 								|
+|					|					|	|---------------------------------------|
+| defaults,discard,	| defaults,discard,	|	| /backup								|	
+| noatime,barrier=0,| noatime,barrier=0,|	| 1000 Gb  Raid 0 - xfs					|	
+| errors=remount-ro,| errors=remount-ro,|	| rw,auto,async,nouser,nosuid,noexec,	|	
+| commit=60,nofail,	| commit=60,nofail,	|	| nodev,nofail,noatime,nobarrier,		|
+| data=writeback	| data=writeback	|	| commit=60,data=writeback,logbufs=8	|	
+|					|					|	|										|	
+|-------------------|-------------------|	|---------------------------------------|   				
+сразу после установки ос:
+
+узнать какие диски в системе
+df -h
+cat /proc/partitions
+fdisk -l | less
+fdisk -l | grep /dev/sda
+
+
+##### Узнать UUID  раздела: ######
+
+blkid -s UUID /dev/sda1
+или
+blkid /dev/sda5
+или всех
+blkid
+
+###################################
+
+
+cat /etc/mke2fs.conf настройки по умолчанию
+
+
+mkfs.ext4 -b 4096 -O dir_index -T news -O ^has_journal /dev/public
+
+mkfs.ext4 -b 4096 -E discard -O dir_index -T news -O ^has_journal /dev/www
+
+mkfs.ext4 -b 4096 -E discard -O dir_index -O ^has_journal /dev/asd_mysql
+
+mkfs.ext4 -b 4096 -E discard -O dir_index -O ^has_journal /dev/asd_pgsql
+
+
+В my.cnf проверить что указано:
+–innodb-log-block-size=4096
+
+
+Cледующую операцию надо сделать для следующих дисков:
+
+/public
+/asd_mysql
+/asd_pgsql
+/var/log
+/tmp
+/var/www
+/backup
+
+
+umount /dev/sda1
+tune2fs -o journal_data_writeback /dev/sda1
+tune2fs -O ^has_journal /dev/sda1
+e2fsck -f /dev/sda1
+
+после перезагрузки проверяем
+dumpe2fs /dev/sdX |grep journal 
+dumpe2fs /dev/sdX |grep features
+
+
+Проверка скорости
+hdparm -tT /dev/hda
+
+
+Поддержка трим на разделах которые не переформатировали
+проверка:
+hdparm -I /dev/sdb |grep TRIM
+Установка:
+tune2fs -o discard /dev/sdXY
+
+
+
+######################################################################################
+# Комментарии:
+
+На основном разделе используем xfs так как не сможем его отмонтировать и отключить излишнее журналирование ext4. Для boot используем xfs а не ext2, так как xfs оптимизирован для ssd и нет лишнего журнала как у ext4.
+
+Для Swap используем Raid 1, чтобы сохранить работаспособность системы в случае если в swap есть данные и вдруг отказал один из дисков. Кроме того отношение запись/чтение на swap 40/60 а рейд один как раз увеличит скорость чтения. В случае активного использования данных с hdd так же не будет затыка с перемещением головок, так как сможет читать с одного из дисков.
+
+Для www используем Raid 1 для того чтобы повысить скорость чтения + избежать затыков с ассинхронным доступом к данным на ssd
+
+
+defaults = rw,suid,dev,exec,auto,nouser,async
+
+barrier=0
+С барьерами есть небольшая проблема. Их не всегда можно использовать. Барьеры не будут работать при использовании device mapper, поскольку он не поддерживает барьеры в принципе. Так что, даже если для вашей ФС включены барьеры, толку от этого будет мало, если сама ФС расположена на логических томах (в RedHat и производных от него такое решение является традиционным), на программном RAID или на томах multipathd, LVM. К тому же это имеет смысл если нет источника бесперебойного питания. В ЦОДе есть.
+
+commit=60 задает приоритет чтения перед записью, то есть если требуется читать на всем диске и писать, то сначало прочитают данные, а после того как освободится в течении 1 минуты запишет данные. Так как в ЦОДе есть бесперебойник, не беспокоимся о том что данные можем потерять. На разделах с базами данных к тому же постоянно пишется лог транзакций баз данных который у нас вынесен на соседний диск.
+
+
+noatime - перекрывает собой nodiratime. Нет необходимости указывать оба параметра.
+
+nofail - используется для того чтобы в случае сбоя диска продолжить загрузку без монтирования раздела.
+
+проверить как смонтирован текущий раздел в котором мы находимся
+grep ext4 /proc/self/mountinfo
+
+tune2fs -l /dev/sda1 | grep features
+
+dir_index The filesystem had dir_index enabled, so I tried running fsck
+-D on it in order to force reindexation. It helped A LOT - ls -1 on this
+directory took about 5 minutes, after reindexation, it took about 10
+seconds!
+
+последнии цифры в fstab 1 1
+
+
+
+#######################################################################################
+# Linux I/O Scheduler. Выбираем оптимальный
+
+cat /sys/block/sda/queue/scheduler
+
+http://www.rhd.ru/docs/articles/schedulers/
+http://habrahabr.ru/post/81504/
+
+для ssd лучший шедулер NOOP CFQ тоже оптимизирован под SSD
+для отдельных дисков указывается так
+echo noop > /sys/block/hda/queue/scheduler
+
+Новое значение, можно установить прямо в grub'е, изменив значение elevator=…
+Далее:
+# update-grub
+# reboot
+
+А, интересно, как выглядят тесты при использовании SATA-дисков с поддержкой NCQ. Это же, вроде, аппаратная поддержка очереднсти комманд. Не будут ли NCQ и I/O Scheduler мешать друг другу?
+
+Будут. При NCQ, или хорошем аппаратном рейде лучше ставить noop или deadline.
+
+
