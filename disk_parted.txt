@@ -2,34 +2,34 @@
 	ssd  --  256Gb  + 256Gb  --				hdd  --  2Tb 	+	2Tb  --
 
 |----------sd1----------|----------sd2----------|	|----------hd1----------|----------hd2----------|
-| /boot      Raid1 500Mb xfs			|	|			|			|
-| defaults,discard,noatime,nobarrier		|	| /var/log		| /tmp			|
-|-----------------------------------------------|	| 16Gb ext2		| 16Gb ext2		|
-| /os 	     Raid1 50Gb  xfs 		 	|	|			|			|
-|						|	| rw,auto,async,	| rw,auto,async,	|
-| defaults,discard,noatime,nobarrier,		|	| nouser,nosuid,	| nouser,nosuid,	|
-| logbufs=8					|	| noexec,nodev,		| noexec,nodev,		|
-|						|	| nofail,noatime,	| nofail,noatime,	|
-|						|	| barrier=0,		| barrier=0,		|
-|-----------------------------------------------|	| data=writeback,	| data=writeback,	|
-| /var/www   Raid1 100Gb Ext4 			|	| commit=60		|			|
-|						|	|			|			|
-| defaults,discard,noatime,barrier=0,		|	|-----------------------|-----------------------|
-| data=writeback,				|	|		Swap  16 Gb  Raid_1		|
-|						|	|-----------------------------------------------|
-|						|	| /public	Raid_1				|
-|-----------------------|-----------------------|	|		1474 Gb - ext4			|
-| MySQL			| mysql_log 		|	| rw,auto,async,nouser,nosuid,noexec,		|
-| pg_log		| PgSQL			|	| nodev,noatime,commit=60,			|
-| 			|		 	|	| barrier=0,data=writeback,			|
-| 100 Gb - Ext4		| 100 Gb - Ext4		|	|		 				|
-|			|			|	|-----------------------------------------------|
-| defaults,discard,	| defaults,discard,	|	| /backup					|
-| noatime,barrier=0,	| noatime,barrier=0,	|	| 1000 Gb  Raid 0 - xfs				|
-| errors=remount-ro,	| errors=remount-ro,	|	| rw,auto,async,nouser,nosuid,noexec,		|
-| commit=60,nofail,	| commit=60,nofail,	|	| nodev,nofail,noatime,nobarrier,		|
-| data=writeback	| data=writeback	|	| commit=60,data=writeback,logbufs=8		|
-|			|			|	|						|
+| /boot      Raid1 500Mb xfs					|	|						|						|
+| defaults,discard,noatime,nobarrier			|	| /var/log				| /tmp					|
+|-----------------------------------------------|	| 16Gb ext2				| 16Gb ext2				|
+| /os 	     Raid1 50Gb  xfs 				 	|	|						|						|
+|												|	| rw,auto,async,		| rw,auto,async,		|
+| defaults,discard,noatime,nobarrier,			|	| nouser,nosuid,		| nouser,nosuid,		|
+| logbufs=8										|	| noexec,nodev,			| noexec,nodev,			|
+|												|	| nofail,noatime,		| nofail,noatime,		|
+|												|	| barrier=0,			| barrier=0,			|
+|-----------------------------------------------|	| data=writeback,		| data=writeback,		|
+| /var/www   Raid1 100Gb ext4					|	| commit=60				|						|
+|												|	|						|						|
+| defaults,discard,noatime,barrier=0,			|	|-----------------------------------------------|
+| data=writeback,								|	|			Swap  16 Gb  Raid_1					|
+|												|	|-----------------------------------------------|
+|												|	| /public	Raid_1								|
+|-----------------------|-----------------------|	|		1474 Gb - ext4							|
+| MySQL					| mysql_log 			|	| rw,auto,async,nouser,nosuid,noexec,			|
+| pg_log				| PgSQL					|	| nodev,noatime,commit=60,						|
+| 						|					 	|	| barrier=0,data=writeback,						|
+| 100 Gb - Ext4			| 100 Gb - Ext4			|	|		 										|
+|						|						|	|-----------------------------------------------|
+| defaults,discard,		| defaults,discard,		|	| /backup										|
+| noatime,barrier=0,	| noatime,barrier=0,	|	| 1000 Gb  Raid 0 - xfs							|
+| errors=remount-ro,	| errors=remount-ro,	|	| rw,auto,async,nouser,nosuid,noexec,			|
+| commit=60,nofail,		| commit=60,nofail,		|	| nodev,nofail,noatime,nobarrier,				|
+| data=writeback		| data=writeback		|	| commit=60,data=writeback,logbufs=8			|
+|						|						|	|												|
 |-----------------------|-----------------------|	|-----------------------------------------------|
 
 сразу после установки ос:

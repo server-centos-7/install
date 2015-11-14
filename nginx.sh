@@ -24,6 +24,8 @@ firewall-cmd --permanent --zone=public --add-service=https
 firewall-cmd --reload
 systemctl start nginx
 systemctl enable nginx
+mv /etc/nginx /etc/nginx_default
+git clone https://github.com/server-centos-7/nginx.git /etc/nginx
 
 # SSL
 yum -y install mod_ssl openssl
