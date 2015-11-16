@@ -1,6 +1,11 @@
 #! /bin/bash
 # -*- coding: utf-8 -*-
 
+# посмотреть
+# https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-using-firewalld-on-centos-7
+
+
+
 systemctl start firewalld
 firewall-cmd --permanent --remove-service=ssh
 # наш порт по ssh

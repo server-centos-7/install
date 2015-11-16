@@ -1,6 +1,8 @@
 #! /bin/bash
 # -*- coding: utf-8 -*-
 
+# проверить http://xandroskin.ru/it/redmine-izbavlyaemsya-ot-webrick/703#more-703
+
 # Discurse
 
 #DISQDB=""

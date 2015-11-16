@@ -1,38 +1,50 @@
 
       ssd  --  256Gb  +  256Gb  --                   hdd  --  2Tb   +   2Tb  --
-      
+
 |----------sd1--------|--------sd2----------|   |--------hd1--------|--------hd2--------|
 | /boot      Raid1 500Mb xfs                |   |                   |                   |
-| defaults,discard,noatime,nobarrier        |   | /var/log          | /tmp              |
+| defaults,discard,noatime,nobarrier 1 2    |   | /var/log          | /tmp              |
 |-------------------------------------------|   | 16Gb ext2         | 16Gb ext2         |
 | /os        Raid1 50Gb  xfs                |   |                   |                   |
 |                                           |   | rw,auto,async,    | rw,auto,async,    |
 | defaults,discard,noatime,nobarrier,       |   | nouser,nosuid,    | nouser,nosuid,    |
-| logbufs=8                                 |   | noexec,nodev,     | noexec,nodev,     |
-|                                           |   | nofail,noatime,   | nofail,noatime,   |
-|                                           |   | barrier=0,        | barrier=0,        |
-|-------------------------------------------|   | data=writeback,   | data=writeback,   |
-| /var/www   Raid1 100Gb ext4               |   | commit=60         |                   |
+| logbufs=8 1 1                             |   | noexec,nodev,     | noexec,nodev,     |
+|                                           |   | nofail,noatime,   | nofail,noatime    |
+|                                           |   | commit=60 0 0     | 0 0               |
+|-------------------------------------------|   |                   |                   |
+| /var/www   Raid1 100Gb ext4               |   |                   |                   |
 |                                           |   |                   |                   |
 | defaults,discard,noatime,barrier=0,       |   |---------------------------------------|
-| data=writeback,                           |   |           Swap  16 Gb  Raid_1         |
+| data=writeback  0 2                       |   |           Swap  16 Gb  Raid_1         |
 |                                           |   |---------------------------------------|
 |                                           |   | /public   Raid_1                      |
 |---------------------|---------------------|   |           1474 Gb - ext4              |
-| MySQL               | mysql_log           |   | rw,auto,async,nouser,nosuid,noexec,   |
-| pg_log              | PgSQL               |   | nodev,noatime,commit=60,              |
-|                     |                     |   | barrier=0,data=writeback,             |
+| /asd_mysql          | /asd_pgsql          |   | rw,auto,async,nouser,nosuid,noexec,   |
+| MySQL pg_log        | PgSQL mysql_log     |   | nodev,noatime,commit=60,              |
+|                     |                     |   | barrier=0,data=writeback  0 0         |
 | 100 Gb - Ext4       | 100 Gb - Ext4       |   |                                       |
 |                     |                     |   |---------------------------------------|
 | defaults,discard,   | defaults,discard,   |   | /backup                               |
 | noatime,barrier=0,  | noatime,barrier=0,  |   | 1000 Gb  Raid 0 - xfs                 |
 | errors=remount-ro,  | errors=remount-ro,  |   | rw,auto,async,nouser,nosuid,noexec,   |
 | commit=60,nofail,   | commit=60,nofail,   |   | nodev,nofail,noatime,nobarrier,       |
-| data=writeback      | data=writeback      |   | commit=60,data=writeback,logbufs=8    |
+| data=writeback 0 2  | data=writeback 0 2  |   | commit=60,data=writeback,logbufs=8 0 0|
 |                     |                     |   |                                       |
 |---------------------|---------------------|   |---------------------------------------|
 
 сразу после установки ос:
+yum install smartmontools
+service smartd start ; chkconfig smartd on
+smartctl -i /dev/sda
+smartctl -s on /dev/sda
+детальная информация
+smartctl -a -d ata /dev/sda
+smartctl -A /dev/sda
+
+smartctl --test=long /dev/sda
+
+http://www.linuxtechi.com/smartctl-monitoring-analysis-tool-hard-drive/
+
 
 узнать какие диски в системе
 df -h
@@ -73,8 +85,6 @@ Cледующую операцию надо сделать для следующ
 /public
 /asd_mysql
 /asd_pgsql
-/var/log
-/tmp
 /var/www
 /backup
 
@@ -111,6 +121,9 @@ tune2fs -o discard /dev/sdXY
 Для www используем Raid 1 для того чтобы повысить скорость чтения + избежать затыков с ассинхронным доступом к данным на ssd
 
 
+
+http://help.ubuntu.ru/wiki/fstab
+
 defaults = rw,suid,dev,exec,auto,nouser,async
 
 barrier=0
@@ -134,7 +147,10 @@ directory took about 5 minutes, after reindexation, it took about 10
 seconds!
 
 последнии цифры в fstab 1 1
+Индикатор необходимости делать резервную копию (как правило не используется и равно 0)
+то есть елси будем делать dump для всего, то разделы с 0 не будут включены в дамп.
 
+Порядок проверки раздела (0- не проверять, 1 - устанавливается для корня, 2 - для остальных разделов).
 
 
 #######################################################################################

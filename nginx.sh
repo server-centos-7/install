@@ -31,6 +31,8 @@ git clone https://github.com/server-centos-7/nginx.git /etc/nginx
 yum -y install mod_ssl openssl
 mkdir /etc/nginx/ssl
 
+# интересно http://xandroskin.ru/category/it/linux-it/nginx/page/3
+
 $SETCOLOR_SUCCESS
 echo -n "$(tput hpa $(tput cols))$(tput cub 15)[Nginx OK]"
 $SETCOLOR_NORMAL

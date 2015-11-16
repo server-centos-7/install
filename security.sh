@@ -64,6 +64,8 @@ echo "alias lynis='cd /usr/share/Lynis && ./lynis'" >> ~/.zshrc
 # grep Warning /var/log/lynis.log
 # grep Suggestion /var/log/lynis.log
 
+
+
 $SETCOLOR_SUCCESS
 echo -n "$(tput hpa $(tput cols))$(tput cub 15)[Security OK]"
 $SETCOLOR_NORMAL
